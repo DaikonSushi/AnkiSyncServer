@@ -1,0 +1,21 @@
+services:
+  anki-yanki-sync:
+    build: .
+    container_name: anki-yanki-sync
+    restart: unless-stopped
+    ports:
+      - "8765:8765"
+    env_file:
+      - .env
+    environment:
+      ANKI_COLLECTION_PATH: /data/collection.anki21
+      ANKICONNECT_BIND: 0.0.0.0
+      ANKICONNECT_PORT: 8765
+      ANKI_CARDS_DIR: /vault/AnkiCards
+      YANKI_NAMESPACE: MyObsidian
+      YANKI_SYNC_INTERVAL_SECONDS: 900
+      YANKI_SYNC_MEDIA: local
+      YANKI_ANKIWEB: "true"
+    volumes:
+      - ../MyObsidian:/vault
+      - ./data:/data
