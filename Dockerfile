@@ -23,6 +23,7 @@ RUN apt-get update \
 WORKDIR /app
 
 COPY entrypoint.sh /app/entrypoint.sh
+COPY server.py /app/server.py
 RUN chmod +x /app/entrypoint.sh
 
 EXPOSE 8765

@@ -58,6 +58,25 @@ docker compose run --rm -e YANKI_ONCE=true anki-yanki-sync
 - 媒体同步：本地媒体
 - 自动推送 AnkiWeb：开启
 
+Podman 用户可以不用 compose，直接运行：
+
+```bash
+cd /home/zzz10258/git_repo/AnkiSyncServer
+podman build -t anki-yanki-sync .
+podman run -d --name anki-yanki-sync \
+  --restart=unless-stopped \
+  --env-file .env \
+  -e ANKICONNECT_COLLECTION_PATH=/data/collection.anki21 \
+  -e ANKICONNECT_BIND=0.0.0.0 \
+  -e ANKICONNECT_PORT=8765 \
+  -e ANKI_CARDS_DIR=/vault/AnkiCards \
+  -e YANKI_NAMESPACE=MyObsidian \
+  -p 8765:8765 \
+  -v /home/zzz10258/git_repo/MyObsidian:/vault:Z \
+  -v /home/zzz10258/git_repo/AnkiSyncServer/data:/data:Z \
+  anki-yanki-sync
+```
+
 ## 注意
 
 - 不要让桌面 Anki 和这个容器同时写同一个 `collection.anki21`。

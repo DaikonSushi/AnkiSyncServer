@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-: "${ANKI_COLLECTION_PATH:=/data/collection.anki21}"
+: "${ANKICONNECT_COLLECTION_PATH:=/data/collection.anki21}"
 : "${ANKICONNECT_BIND:=0.0.0.0}"
 : "${ANKICONNECT_PORT:=8765}"
 : "${ANKI_CARDS_DIR:=/vault/AnkiCards}"
@@ -12,8 +12,12 @@ set -euo pipefail
 : "${YANKI_GIT_PULL:=false}"
 : "${YANKI_ONCE:=false}"
 
-if [[ ! -f "$ANKI_COLLECTION_PATH" ]]; then
-  echo "Missing Anki collection: $ANKI_COLLECTION_PATH" >&2
+export ANKICONNECT_COLLECTION_PATH
+export ANKICONNECT_BIND
+export ANKICONNECT_PORT
+
+if [[ ! -f "$ANKICONNECT_COLLECTION_PATH" ]]; then
+  echo "Missing Anki collection: $ANKICONNECT_COLLECTION_PATH" >&2
   echo "Mount your collection.anki21 into /data/collection.anki21 first." >&2
   exit 1
 fi
@@ -23,7 +27,7 @@ if [[ ! -d "$ANKI_CARDS_DIR" ]]; then
   exit 1
 fi
 
-python -m uvicorn anki_connect_server.api:app \
+python -m uvicorn server:app \
   --host "$ANKICONNECT_BIND" \
   --port "$ANKICONNECT_PORT" &
 server_pid="$!"
@@ -34,14 +38,21 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 echo "Waiting for AnkiConnect-compatible API..."
+api_ready=false
 for _ in $(seq 1 60); do
   if curl -fsS "http://127.0.0.1:${ANKICONNECT_PORT}/api" \
     -H 'Content-Type: application/json' \
     -d '{"action":"version","version":6}' >/dev/null; then
+    api_ready=true
     break
   fi
   sleep 1
 done
+
+if [[ "$api_ready" != "true" ]]; then
+  echo "AnkiConnect-compatible API did not become ready." >&2
+  exit 1
+fi
 
 run_sync() {
   if [[ "$YANKI_GIT_PULL" == "true" && -d /vault/.git ]]; then
