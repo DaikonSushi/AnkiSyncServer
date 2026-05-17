@@ -55,6 +55,14 @@ async def handle_compat_request(req: AnkiConnectRequest):
         ensure_model_for_note(req.params.get("note", {}))
 
     response = await handle_request(req)
+    if req.action == "notesInfo":
+        result = response.get("result") if isinstance(response, dict) else getattr(response, "result", None)
+        anki = wrapper.get_anki_wrapper()
+        if anki and isinstance(result, list):
+            for note_info in result:
+                if isinstance(note_info, dict) and "cards" not in note_info:
+                    note = anki.col.get_note(note_info["noteId"])
+                    note_info["cards"] = [card.id for card in note.cards()]
     return response
 
 

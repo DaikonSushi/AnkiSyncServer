@@ -16,6 +16,14 @@ services:
       YANKI_SYNC_INTERVAL_SECONDS: 900
       YANKI_SYNC_MEDIA: local
       YANKI_ANKIWEB: "true"
+      YANKI_GIT_PULL: "true"
+      OBSIDIAN_GIT_REPO: git@github.com:DaikonSushi/MyObsidian.git
+      OBSIDIAN_GIT_BRANCH: main
+      OBSIDIAN_GIT_DIR: /vault
     volumes:
-      - ../MyObsidian:/vault
+      - obsidian-vault:/vault
       - ./data:/data
+      - ${HOME}/.ssh:/root/.ssh:ro,z
+
+volumes:
+  obsidian-vault:

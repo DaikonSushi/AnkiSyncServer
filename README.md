@@ -52,11 +52,19 @@ docker compose run --rm -e YANKI_ONCE=true anki-yanki-sync
 
 默认配置：
 
-- 卡片目录：`../MyObsidian/AnkiCards`
+- Obsidian 仓库：`git@github.com:DaikonSushi/MyObsidian.git`
+- Obsidian 分支：`main`
+- 容器内 vault 路径：`/vault`
+- 卡片目录：`/vault/AnkiCards`
 - Yanki namespace：`MyObsidian`
 - 同步间隔：900 秒
 - 媒体同步：本地媒体
 - 自动推送 AnkiWeb：开启
+- 每轮同步前自动 `git pull`
+
+容器会在第一次启动时 clone `MyObsidian` 到 `/vault`，之后每 15 分钟先 `git pull --ff-only`，再运行 Yanki 同步。
+
+服务器需要能通过 SSH 访问 GitHub。默认 compose 会把宿主机 `${HOME}/.ssh` 只读挂载到容器内 `/root/.ssh`。在启用 SELinux 的 Podman 环境里，挂载参数需要包含 `:z`。
 
 Podman 用户可以不用 compose，直接运行：
 
@@ -71,9 +79,14 @@ podman run -d --name anki-yanki-sync \
   -e ANKICONNECT_PORT=8765 \
   -e ANKI_CARDS_DIR=/vault/AnkiCards \
   -e YANKI_NAMESPACE=MyObsidian \
+  -e YANKI_GIT_PULL=true \
+  -e OBSIDIAN_GIT_REPO=git@github.com:DaikonSushi/MyObsidian.git \
+  -e OBSIDIAN_GIT_BRANCH=main \
+  -e OBSIDIAN_GIT_DIR=/vault \
   -p 8765:8765 \
-  -v /home/zzz10258/git_repo/MyObsidian:/vault:Z \
+  -v obsidian-vault:/vault \
   -v /home/zzz10258/git_repo/AnkiSyncServer/data:/data:Z \
+  -v $HOME/.ssh:/root/.ssh:ro,z \
   anki-yanki-sync
 ```
 
